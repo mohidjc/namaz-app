@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a1628">
+<title>نماز اوقات</title>
+<link rel="manifest" href="manifest.json">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  @font-face {
+    font-family: 'NotoNastaliq';
+    src: local('Noto Nastaliq Urdu'), local('Jameel Noori Nastaleeq');
+  }
+
+  :root {
+    --bg-top: #0a1628;
+    --bg-mid: #162040;
+    --bg-bottom: #1a1a3e;
+    --text-primary: #ffffff;
+    --text-muted: rgba(255,255,255,0.5);
+    --text-dim: rgba(255,255,255,0.3);
+    --gold: rgba(255,215,140,0.7);
+    --gold-dim: rgba(255,215,140,0.35);
+    --green: rgba(72,187,120,0.95);
+    --green-bg: rgba(72,187,120,0.12);
+    --green-border: rgba(72,187,120,0.25);
+    --blue: rgba(140,170,255,0.95);
+    --blue-dim: rgba(140,170,255,0.85);
+    --blue-bg: rgba(100,140,255,0.1);
+    --blue-border: rgba(100,140,255,0.2);
+    --row-bg: rgba(255,255,255,0.03);
+    --green-row-bg: rgba(72,187,120,0.1);
+    --green-row-border: rgba(72,187,120,0.2);
+    --blue-row-bg: rgba(100,140,255,0.08);
+    --blue-row-border: rgba(100,140,255,0.15);
+  }
+
+  html, body {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-mid) 40%, var(--bg-bottom) 100%);
+    font-family: 'NotoNastaliq', 'Noto Nastaliq Urdu', 'Jameel Noori Nastaleeq', 'Segoe UI', 'Arabic Typesetting', sans-serif;
+    direction: rtl;
+    position: fixed;
+    top: 0; left: 0;
+  }
+
+  .app {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: env(safe-area-inset-top, 16px) 20px env(safe-area-inset-bottom, 16px);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .pattern-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    opacity: 0.04;
+    background-image: repeating-conic-gradient(from 0deg at 50% 50%, transparent 0deg 80deg, rgba(255,255,255,0.15) 80deg 90deg);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .content {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    justify-content: center;
+    gap: 2.5vh;
+  }
+
+  .bismillah {
+    color: var(--gold);
+    font-size: clamp(13px, 3.2vw, 16px);
+    text-align: center;
+    font-style: italic;
+  }
+
+  .jummah-banner {
+    color: rgba(255,215,140,0.95);
+    font-size: clamp(20px, 5.5vw, 28px);
+    font-weight: 700;
+    text-align: center;
+    display: none;
+  }
+
+  .jummah-banner.visible {
+    display: block;
+  }
+
+  .current-time-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 8px;
+    direction: rtl;
+    width: 100%;
+  }
+
+  .current-time-label {
+    color: var(--text-muted);
+    font-size: clamp(22px, 6vw, 32px);
+    font-weight: 500;
+  }
+
+  .current-time-clock {
+    color: var(--text-primary);
+    font-size: clamp(36px, 10vw, 48px);
+    font-weight: 500;
+    letter-spacing: 2px;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+  }
+
+  .current-time-ampm {
+    color: var(--text-muted);
+    font-size: clamp(16px, 4.5vw, 22px);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+  }
+
+  .status-banner {
+    width: 100%;
+    border-radius: 12px;
+    padding: clamp(8px, 2vh, 14px) 14px;
+    text-align: center;
+  }
+
+  .status-banner.current {
+    background: var(--green-bg);
+    border: 1px solid var(--green-border);
+  }
+
+  .status-banner.next {
+    background: var(--blue-bg);
+    border: 1px solid var(--blue-border);
+  }
+
+  .status-banner.not-time {
+    background: rgba(255,140,140,0.08);
+    border: 1px solid rgba(255,140,140,0.2);
+  }
+
+  .status-text {
+    font-size: clamp(14px, 3.5vw, 17px);
+    font-weight: 500;
+    line-height: 1.6;
+  }
+
+  .status-banner.current .status-text {
+    color: var(--green);
+  }
+
+  .status-banner.next .status-text {
+    color: var(--blue);
+  }
+
+  .status-banner.not-time .status-text {
+    color: rgba(255,140,140,0.9);
+  }
+
+  .countdown-text {
+    color: var(--blue-dim);
+    font-size: clamp(14px, 3.8vw, 18px);
+    font-weight: 500;
+    margin-top: 4px;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+  }
+
+  .prayer-list {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .prayer-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: clamp(8px, 2vh, 12px) 12px;
+    border-radius: 8px;
+    background: var(--row-bg);
+    transition: all 0.3s ease;
+  }
+
+  .prayer-row.current-prayer {
+    background: var(--green-row-bg);
+    border: 1px solid var(--green-row-border);
+  }
+
+  .prayer-row.next-prayer {
+    background: var(--blue-row-bg);
+    border: 1px solid var(--blue-row-border);
+  }
+
+  .prayer-row.past {
+    opacity: 1;
+  }
+
+  .prayer-name {
+    font-size: clamp(14px, 3.5vw, 17px);
+    color: var(--text-dim);
+  }
+
+  .prayer-row.current-prayer .prayer-name {
+    color: var(--green);
+    font-weight: 500;
+  }
+
+  .prayer-row.next-prayer .prayer-name {
+    color: var(--blue);
+    font-weight: 500;
+  }
+
+  .footer-text {
+    color: var(--gold-dim);
+    font-size: clamp(11px, 2.5vw, 13px);
+    text-align: center;
+    font-style: italic;
+  }
+
+  .loading-screen {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-mid) 40%, var(--bg-bottom) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    transition: opacity 0.5s ease;
+  }
+
+  .loading-screen.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .loading-text {
+    color: var(--gold);
+    font-size: 18px;
+    text-align: center;
+  }
+
+  .pulse {
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
+  }
+</style>
+</head>
+<body>
+
+<div class="loading-screen" id="loadingScreen">
+  <p class="loading-text pulse">بسم اللہ الرحمٰن الرحیم</p>
+</div>
+
+<div class="app">
+  <div class="pattern-overlay"></div>
+  <div class="content">
+    <p class="bismillah">بسم اللہ الرحمٰن الرحیم</p>
+
+    <p class="jummah-banner" id="jummahBanner">آج جمعہ ہے</p>
+
+    <div class="current-time-row">
+      <span class="current-time-label">ابھی وقت</span>
+      <span class="current-time-clock" id="currentClock">--:--</span>
+      <span class="current-time-ampm" id="currentAmPm">--</span>
+    </div>
+
+    <div class="status-banner current" id="currentBanner" style="display:none;">
+      <p class="status-text" id="currentBannerText"></p>
+    </div>
+
+    <div class="status-banner next" id="nextBanner" style="display:none;">
+      <p class="status-text" id="nextBannerText"></p>
+      <p class="countdown-text" id="countdownText"></p>
+    </div>
+
+    <div class="prayer-list" id="prayerList"></div>
+
+    <p class="footer-text">اللہ اکبر اللہ اکبر</p>
+  </div>
+</div>
+
+<script>
+const PRAYER_NAMES_URDU = {
+  Fajr: 'فجر',
+  Dhuhr: 'ظہر',
+  Asr: 'عصر',
+  Maghrib: 'مغرب',
+  Isha: 'عشاء'
+};
+
+const PRAYER_ORDER = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+
+let prayerTimes = null;
+let cachedDate = null;
+
+function formatTimeUrdu(dateObj) {
+  let h = dateObj.getHours();
+  let m = dateObj.getMinutes();
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12;
+  if (h === 0) h = 12;
+  const mStr = m < 10 ? '0' + m : m;
+  return { time: h + ':' + mStr, ampm: ampm };
+}
+
+function parseTime(timeStr) {
+  const parts = timeStr.split(':');
+  const now = new Date();
+  const d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), parseInt(parts[0]), parseInt(parts[1]));
+  return d;
+}
+
+function getCountdownUrdu(diffMs) {
+  const totalMins = Math.ceil(diffMs / 60000);
+  if (totalMins < 1) return 'ابھی';
+  if (totalMins < 60) {
+    return 'تقریباً ' + totalMins + ' منٹ باقی';
+  }
+  const hours = Math.floor(totalMins / 60);
+  const mins = totalMins % 60;
+  if (mins === 0) {
+    return 'تقریباً ' + hours + ' گھنٹے باقی';
+  }
+  return 'تقریباً ' + hours + ' گھنٹے ' + mins + ' منٹ باقی';
+}
+
+async function fetchPrayerTimes() {
+  const today = new Date();
+  const dateStr = today.getDate() + '-' + (today.getMonth() + 1) + '-' + today.getFullYear();
+
+  if (cachedDate === dateStr && prayerTimes) {
+    return prayerTimes;
+  }
+
+  try {
+    const url = 'https://api.aladhan.com/v1/timingsByCity/' + dateStr + '?city=Manchester&country=United+Kingdom&method=15';
+    const response = await fetch(url);
+    const data = await response.json();
+    const timings = data.data.timings;
+
+    prayerTimes = {};
+    PRAYER_ORDER.forEach(name => {
+      prayerTimes[name] = timings[name].replace(/\s*\(.*\)/, '');
+    });
+
+    cachedDate = dateStr;
+
+    try {
+      localStorage.setItem('cachedPrayerTimes', JSON.stringify(prayerTimes));
+      localStorage.setItem('cachedPrayerDate', dateStr);
+    } catch(e) {}
+
+    return prayerTimes;
+  } catch (e) {
+    try {
+      const cached = localStorage.getItem('cachedPrayerTimes');
+      const cachedD = localStorage.getItem('cachedPrayerDate');
+      if (cached && cachedD === dateStr) {
+        prayerTimes = JSON.parse(cached);
+        cachedDate = dateStr;
+        return prayerTimes;
+      }
+    } catch(e2) {}
+    return null;
+  }
+}
+
+function getCurrentAndNextPrayer(times) {
+  const now = new Date();
+  let currentPrayer = null;
+  let nextPrayer = null;
+
+  for (let i = 0; i < PRAYER_ORDER.length; i++) {
+    const name = PRAYER_ORDER[i];
+    const prayerTime = parseTime(times[name]);
+    const nextName = PRAYER_ORDER[i + 1];
+    const nextPrayerTime = nextName ? parseTime(times[nextName]) : null;
+
+    if (now >= prayerTime && (nextPrayerTime === null || now < nextPrayerTime)) {
+      currentPrayer = name;
+      nextPrayer = nextName || null;
+      break;
+    }
+  }
+
+  if (!currentPrayer) {
+    const fajrTime = parseTime(times['Fajr']);
+    if (now < fajrTime) {
+      currentPrayer = null;
+      nextPrayer = 'Fajr';
+    }
+  }
+
+  return { currentPrayer, nextPrayer };
+}
+
+function isFriday() {
+  return new Date().getDay() === 5;
+}
+
+function getPrayerNameUrdu(name) {
+  if (name === 'Dhuhr' && isFriday()) return 'جمعہ';
+  return PRAYER_NAMES_URDU[name];
+}
+
+function formatPrayerTimeUrdu(times, name) {
+  const t = parseTime(times[name]);
+  const f = formatTimeUrdu(t);
+  return f.time + ' ' + f.ampm;
+}
+
+function updateUI() {
+  if (!prayerTimes) return;
+
+  const now = new Date();
+  const formatted = formatTimeUrdu(now);
+  document.getElementById('currentClock').textContent = formatted.time;
+  document.getElementById('currentAmPm').textContent = formatted.ampm;
+
+  const jummahBanner = document.getElementById('jummahBanner');
+  if (isFriday()) {
+    jummahBanner.classList.add('visible');
+  } else {
+    jummahBanner.classList.remove('visible');
+  }
+
+  const { currentPrayer, nextPrayer } = getCurrentAndNextPrayer(prayerTimes);
+
+  const currentBanner = document.getElementById('currentBanner');
+  const currentBannerText = document.getElementById('currentBannerText');
+  const nextBanner = document.getElementById('nextBanner');
+  const nextBannerText = document.getElementById('nextBannerText');
+  const countdownText = document.getElementById('countdownText');
+
+  if (currentPrayer) {
+    const nameUrdu = getPrayerNameUrdu(currentPrayer);
+    currentBanner.style.display = 'block';
+    currentBanner.className = 'status-banner current';
+    currentBannerText.textContent = 'ابھی ' + nameUrdu + ' کی نماز کا وقت ہے';
+  } else {
+    currentBanner.style.display = 'block';
+    currentBanner.className = 'status-banner not-time';
+    currentBannerText.textContent = 'ابھی نماز کا وقت نہیں ہے';
+  }
+
+  if (nextPrayer) {
+    const nextNameUrdu = getPrayerNameUrdu(nextPrayer);
+    const nextTimeFormatted = formatPrayerTimeUrdu(prayerTimes, nextPrayer);
+    nextBanner.style.display = 'block';
+    nextBannerText.textContent = 'اگلی نماز ' + nextNameUrdu + ' ہے — ' + nextTimeFormatted + ' بجے';
+
+    const nextPrayerDate = parseTime(prayerTimes[nextPrayer]);
+    const diff = nextPrayerDate - now;
+    if (diff > 0) {
+      countdownText.textContent = getCountdownUrdu(diff);
+    } else {
+      countdownText.textContent = '';
+    }
+  } else {
+    const tomorrowFajr = parseTime(prayerTimes['Fajr']);
+    tomorrowFajr.setDate(tomorrowFajr.getDate() + 1);
+    const diff = tomorrowFajr - now;
+
+    nextBanner.style.display = 'block';
+    nextBannerText.textContent = 'اگلی نماز فجر ہے — کل';
+    countdownText.textContent = diff > 0 ? getCountdownUrdu(diff) : '';
+  }
+
+  const prayerList = document.getElementById('prayerList');
+  prayerList.innerHTML = '';
+
+  PRAYER_ORDER.forEach(name => {
+    const row = document.createElement('div');
+    row.className = 'prayer-row';
+
+    const prayerTime = parseTime(prayerTimes[name]);
+
+    if (name === currentPrayer) {
+      row.classList.add('current-prayer');
+    } else if (name === nextPrayer) {
+      row.classList.add('next-prayer');
+    } else if (now > prayerTime && name !== currentPrayer) {
+      row.classList.add('past');
+    }
+
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'prayer-name';
+    const displayName = getPrayerNameUrdu(name);
+
+    if (name === currentPrayer) {
+      nameSpan.textContent = '◀ ' + displayName;
+    } else {
+      nameSpan.textContent = displayName;
+    }
+
+    row.appendChild(nameSpan);
+    prayerList.appendChild(row);
+  });
+}
+
+async function init() {
+  const times = await fetchPrayerTimes();
+  if (times) {
+    updateUI();
+    document.getElementById('loadingScreen').classList.add('hidden');
+
+    setInterval(updateUI, 1000);
+
+    setInterval(async () => {
+      await fetchPrayerTimes();
+    }, 3600000);
+  } else {
+    document.querySelector('.loading-text').textContent = 'انٹرنیٹ سے جڑیں';
+    document.querySelector('.loading-text').classList.remove('pulse');
+  }
+}
+
+init();
+
+let lastDate = new Date().getDate();
+setInterval(() => {
+  const today = new Date().getDate();
+  if (today !== lastDate) {
+    lastDate = today;
+    cachedDate = null;
+    fetchPrayerTimes().then(() => updateUI());
+  }
+}, 60000);
+</script>
+</body>
+</html>
