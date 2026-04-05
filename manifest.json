@@ -1,12 +1,12 @@
 {
-  "name": "نماز اوقات",
-  "short_name": "نماز",
+  "name": "Prayer Times",
+  "short_name": "Prayer Times",
   "description": "Prayer times for Manchester",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0a1628",
-  "theme_color": "#0a1628",
+  "background_color": "#060e1a",
+  "theme_color": "#060e1a",
   "icons": [
     {
       "src": "icon-192.png",
