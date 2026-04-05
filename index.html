@@ -60,7 +60,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: env(safe-area-inset-top, 12px) 18px env(safe-area-inset-bottom, 12px);
+    padding: env(safe-area-inset-top, 12px) 16px env(safe-area-inset-bottom, 12px);
     position: relative;
     overflow: hidden;
   }
@@ -83,7 +83,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 2vh;
+    gap: 1.8vh;
   }
 
   .bismillah {
@@ -129,7 +129,7 @@
   .status-banner {
     width: 100%;
     border-radius: 14px;
-    padding: clamp(12px, 2.5vh, 18px) 16px;
+    padding: clamp(10px, 2vh, 16px) 14px;
     text-align: center;
   }
 
@@ -154,39 +154,32 @@
     line-height: 1.5;
   }
 
-  .status-banner.current .status-text {
-    color: var(--green);
-  }
-
-  .status-banner.next .status-text {
-    color: var(--brown);
-  }
-
-  .status-banner.not-time .status-text {
-    color: var(--red);
-  }
+  .status-banner.current .status-text { color: var(--green); }
+  .status-banner.next .status-text { color: var(--brown); }
+  .status-banner.not-time .status-text { color: var(--red); }
 
   .countdown-text {
     color: var(--brown-soft);
     font-size: clamp(17px, 4.5vw, 22px);
     font-weight: 600;
-    margin-top: 8px;
+    margin-top: 6px;
   }
 
   .prayer-list {
     width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 4px;
   }
 
   .prayer-row {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
-    padding: clamp(7px, 1.3vh, 10px) 12px;
-    border-radius: 8px;
+    padding: clamp(8px, 1.5vh, 12px) 14px;
+    border-radius: 10px;
     background: var(--row-bg);
+    text-align: center;
   }
 
   .prayer-row.current-prayer {
@@ -194,37 +187,22 @@
     border: 1.5px solid var(--green-row-border);
   }
 
-  .prayer-row.next-prayer {
-    background: var(--brown-row-bg);
-    border: 1.5px solid var(--brown-row-border);
-  }
-
-  .prayer-name {
-    font-size: clamp(13px, 3.2vw, 15px);
-    color: var(--text-dim);
-  }
-
-  .prayer-row.current-prayer .prayer-name {
-    color: var(--green);
-    font-weight: 600;
-  }
-
-  .prayer-row.next-prayer .prayer-name {
-    color: var(--brown);
-    font-weight: 600;
-  }
-
-  .prayer-status {
-    font-size: clamp(13px, 3.2vw, 15px);
+  .prayer-sentence {
+    font-size: clamp(14px, 3.8vw, 17px);
     font-weight: 500;
   }
 
-  .prayer-status.done {
+  .prayer-sentence.done {
     color: var(--green-soft);
   }
 
-  .prayer-status.not-yet {
+  .prayer-sentence.not-yet {
     color: var(--red-soft);
+  }
+
+  .prayer-sentence.active {
+    color: var(--green);
+    font-weight: 600;
   }
 
   .footer-text {
@@ -395,27 +373,13 @@ function getCurrentAndNextPrayer(times) {
   const maghribStart = parseTime(times['Maghrib']);
   const ishaStart = parseTime(times['Isha']);
 
-  if (now < fajrStart) {
-    return { currentPrayer: null, nextPrayer: 'Fajr' };
-  }
-  if (sunrise && now >= fajrStart && now < sunrise) {
-    return { currentPrayer: 'Fajr', nextPrayer: 'Dhuhr' };
-  }
-  if (sunrise && now >= sunrise && now < dhuhrStart) {
-    return { currentPrayer: null, nextPrayer: 'Dhuhr' };
-  }
-  if (now >= dhuhrStart && now < asrStart) {
-    return { currentPrayer: 'Dhuhr', nextPrayer: 'Asr' };
-  }
-  if (now >= asrStart && now < maghribStart) {
-    return { currentPrayer: 'Asr', nextPrayer: 'Maghrib' };
-  }
-  if (now >= maghribStart && now < ishaStart) {
-    return { currentPrayer: 'Maghrib', nextPrayer: 'Isha' };
-  }
-  if (now >= ishaStart) {
-    return { currentPrayer: 'Isha', nextPrayer: null };
-  }
+  if (now < fajrStart) return { currentPrayer: null, nextPrayer: 'Fajr' };
+  if (sunrise && now >= fajrStart && now < sunrise) return { currentPrayer: 'Fajr', nextPrayer: 'Dhuhr' };
+  if (sunrise && now >= sunrise && now < dhuhrStart) return { currentPrayer: null, nextPrayer: 'Dhuhr' };
+  if (now >= dhuhrStart && now < asrStart) return { currentPrayer: 'Dhuhr', nextPrayer: 'Asr' };
+  if (now >= asrStart && now < maghribStart) return { currentPrayer: 'Asr', nextPrayer: 'Maghrib' };
+  if (now >= maghribStart && now < ishaStart) return { currentPrayer: 'Maghrib', nextPrayer: 'Isha' };
+  if (now >= ishaStart) return { currentPrayer: 'Isha', nextPrayer: null };
   return { currentPrayer: null, nextPrayer: 'Fajr' };
 }
 
@@ -424,12 +388,8 @@ function getPrayerRowStatus(prayerName, times) {
   const prayerStart = parseTime(times[prayerName]);
   const diff = now - prayerStart;
 
-  if (now < prayerStart) {
-    return 'not-yet';
-  }
-  if (diff < FIFTEEN_MINUTES) {
-    return 'within15';
-  }
+  if (now < prayerStart) return 'not-yet';
+  if (diff < FIFTEEN_MINUTES) return 'within15';
   return 'done';
 }
 
@@ -451,15 +411,11 @@ function updateUI() {
   if (!prayerTimes) return;
 
   const now = new Date();
-
   document.getElementById('currentClock').textContent = formatTime12(now);
 
   const jummahBanner = document.getElementById('jummahBanner');
-  if (isFriday()) {
-    jummahBanner.classList.add('visible');
-  } else {
-    jummahBanner.classList.remove('visible');
-  }
+  if (isFriday()) { jummahBanner.classList.add('visible'); }
+  else { jummahBanner.classList.remove('visible'); }
 
   const { currentPrayer, nextPrayer } = getCurrentAndNextPrayer(prayerTimes);
 
@@ -485,14 +441,9 @@ function updateUI() {
     const nextTime12 = getPrayerTime12(prayerTimes, nextPrayer);
     nextBanner.style.display = 'block';
     nextBannerText.textContent = 'اگلی نماز ' + nextNameUrdu + ' ہے اور وہ ' + nextTime12 + ' بجے ہے — ابھی نہیں';
-
     const nextPrayerDate = parseTime(prayerTimes[nextPrayer]);
     const diff = nextPrayerDate - now;
-    if (diff > 0) {
-      countdownText.textContent = getCountdownUrdu(diff);
-    } else {
-      countdownText.textContent = '';
-    }
+    countdownText.textContent = diff > 0 ? getCountdownUrdu(diff) : '';
   } else {
     const fajrTime12 = getPrayerTime12(prayerTimes, 'Fajr');
     nextBanner.style.display = 'block';
@@ -503,6 +454,7 @@ function updateUI() {
     countdownText.textContent = diff > 0 ? getCountdownUrdu(diff) : '';
   }
 
+  // Prayer list — full sentences
   const prayerList = document.getElementById('prayerList');
   prayerList.innerHTML = '';
 
@@ -510,37 +462,26 @@ function updateUI() {
     const row = document.createElement('div');
     row.className = 'prayer-row';
 
-    if (name === currentPrayer) {
-      row.classList.add('current-prayer');
-    } else if (name === nextPrayer) {
-      row.classList.add('next-prayer');
-    }
-
-    const nameSpan = document.createElement('span');
-    nameSpan.className = 'prayer-name';
     const displayName = getPrayerNameUrdu(name);
-    if (name === currentPrayer) {
-      nameSpan.textContent = '◀ ' + displayName;
-    } else {
-      nameSpan.textContent = displayName;
-    }
-
-    const statusSpan = document.createElement('span');
-    statusSpan.className = 'prayer-status';
     const rowStatus = getPrayerRowStatus(name, prayerTimes);
 
+    const sentence = document.createElement('span');
+    sentence.className = 'prayer-sentence';
+
     if (rowStatus === 'done') {
-      statusSpan.classList.add('done');
-      statusSpan.textContent = 'آپ نے پڑھ لی ہے';
+      sentence.classList.add('done');
+      sentence.textContent = displayName + ' آپ نے پڑھ لی ہے';
     } else if (rowStatus === 'not-yet') {
-      statusSpan.classList.add('not-yet');
-      statusSpan.textContent = 'ابھی وقت نہیں ہوا';
+      sentence.classList.add('not-yet');
+      sentence.textContent = displayName + ' ابھی وقت نہیں ہوا';
     } else {
-      statusSpan.textContent = '';
+      // within 15 mins — just show the name highlighted
+      row.classList.add('current-prayer');
+      sentence.classList.add('active');
+      sentence.textContent = '◀ ' + displayName;
     }
 
-    row.appendChild(nameSpan);
-    row.appendChild(statusSpan);
+    row.appendChild(sentence);
     prayerList.appendChild(row);
   });
 }
